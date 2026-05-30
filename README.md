@@ -116,40 +116,6 @@ Personal-Portfolio/
 
 ---
 
-## 🚀 Installation
-
-Clone the repository:
-
-```bash
-git clone https://github.com/your-username/personal-portfolio.git
-```
-
-Navigate into the project directory:
-
-```bash
-cd personal-portfolio
-```
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-Start the development server:
-
-```bash
-npm run dev
-```
-
-Open your browser and visit:
-
-```text
-http://localhost:3000
-```
-
----
-
 ## 📸 Portfolio Categories
 
 * Articles & Blogs
