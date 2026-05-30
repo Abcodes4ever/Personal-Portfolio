@@ -330,20 +330,14 @@
 <script>
   // ── STATE ──────────────────────────────────────────
   const TYPE_META = {
-    article:  { label: 'Article / Blog',      dot: 'dot-article',  text: 'type-text-article',  emoji: '📰' },
+    article:  { label: 'Article / Blog',       dot: 'dot-article',  text: 'type-text-article',  emoji: '📰' },
     video:    { label: 'Edited Video',         dot: 'dot-video',    text: 'type-text-video',    emoji: '🎬' },
     code:     { label: 'Coding Project',       dot: 'dot-code',     text: 'type-text-code',     emoji: '💻' },
     essay:    { label: 'Essay',                dot: 'dot-essay',    text: 'type-text-essay',    emoji: '✍️' },
     diagram:  { label: 'Engineering Diagram',  dot: 'dot-diagram',  text: 'type-text-diagram',  emoji: '📐' },
   };
 
-  let projects = [
-    { id:1, title:'The Architecture of Curiosity', type:'essay', desc:'A meditative essay on why generalists thrive in an age of hyper-specialisation — exploring breadth as a strategic advantage.', tags:['Philosophy','Creativity'], date:'2024-09', link:'#', featured:true },
-    { id:2, title:'Building a Minimal Static Site Generator', type:'code', desc:'A zero-dependency CLI tool in Python that converts Markdown files into a clean, deployable HTML site.', tags:['Python','CLI','Open Source'], date:'2024-07', link:'#', featured:false },
-    { id:3, title:'City Textures: A Short Film', type:'video', desc:'A 4-minute visual essay on urban impermanence, edited in DaVinci Resolve with original music.', tags:['Film','Motion','DaVinci'], date:'2024-05', link:'#', featured:false },
-    { id:4, title:'Fluid Dynamics: Process Flow Diagram', type:'diagram', desc:'A detailed engineering process flow diagram for a water treatment simulation, drafted in AutoCAD.', tags:['AutoCAD','Engineering','CAD'], date:'2024-03', link:'#', featured:false },
-    { id:5, title:'Why We Can\'t Stop Doomscrolling', type:'article', desc:'An investigation into the neuroscience of variable reward schedules and how social media platforms exploit our attention.', tags:['Tech','Psychology','UX'], date:'2024-02', link:'#', featured:false },
-  ];
+  let projects = [];
 
   let currentFilter = 'all';
   let nextId = 6;
@@ -496,20 +490,20 @@
   function addProject() {
     const title = document.getElementById('inp-title').value.trim();
     if (!title) { alert('Please enter a project title.'); return; }
-    const type    = document.getElementById('inp-type').value;
-    const date    = document.getElementById('inp-date').value;
-    const desc    = document.getElementById('inp-desc').value.trim() || 'No description provided.';
-    const tagsRaw = document.getElementById('inp-tags').value;
-    const link    = document.getElementById('inp-link').value.trim() || '#';
+    const type     = document.getElementById('inp-type').value;
+    const date     = document.getElementById('inp-date').value;
+    const desc     = document.getElementById('inp-desc').value.trim() || 'No description provided.';
+    const tagsRaw  = document.getElementById('inp-tags').value;
+    const link     = document.getElementById('inp-link').value.trim() || '#';
     const featured = document.getElementById('inp-featured').checked;
-    const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+    const tags     = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
 
-    // If featured, unfeature others
     if (featured) projects.forEach(p => p.featured = false);
 
     projects.unshift({ id: nextId++, title, type, desc, tags, date, link, featured });
 
-    // Reset form
+    saveProjects(); // 👈 new line
+
     ['inp-title','inp-date','inp-desc','inp-tags','inp-link'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('inp-featured').checked = false;
     document.getElementById('inp-type').value = 'article';
@@ -517,6 +511,19 @@
     closeModal();
     renderHomePreview();
     renderPortfolio(currentFilter);
+  }
+
+  // ── SAVING PROJECT UPLOADS ─────────────────────────
+  function saveProjects() {
+    localStorage.setItem('joat_projects', JSON.stringify(projects));
+  }
+
+  function loadProjects() {
+    const saved = localStorage.getItem('joat_projects');
+    if (saved) {
+      projects = JSON.parse(saved);
+      nextId = projects.length ? Math.max(...projects.map(p => p.id)) + 1 : 1;
+    }
   }
 
   // ── PROFILE PHOTO UPLOAD ─────────────────────────
@@ -536,6 +543,7 @@
   }
 
   // ── INIT ───────────────────────────────────────────
+  loadProjects();
   document.getElementById('year').textContent = new Date().getFullYear();
   const savedPhoto = localStorage.getItem('profilePhoto');
   if (savedPhoto) {
