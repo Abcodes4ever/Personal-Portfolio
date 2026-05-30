@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Placeholder</title>
+  <title>Abigail Rita Rayan</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Cinzel:wght@400;600;700&family=IM+Fell+English:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
@@ -844,7 +844,7 @@
 
 <!-- NAV -->
 <nav>
-  <div class="nav-logo" onclick="showPage('home')">[Placeholder]</div>
+  <div class="nav-logo" onclick="showPage('home')">Abigail Rita Rayan</div>
   <ul class="nav-links">
     <li><a onclick="showPage('home')" id="nav-home" class="active">Home</a></li>
     <li><a onclick="showPage('portfolio')" id="nav-portfolio">Portfolio</a></li>
@@ -860,7 +860,7 @@
   <section class="hero">
     <div class="hero-left">
       <div class="hero-eyebrow">Portfolio & Creative Work</div>
-      <h1 class="hero-title">[Placeholder]</h1>
+      <h1 class="hero-title">Abigail Rita Rayan</h1>
       <p class="hero-subtitle">Jack Of All Trades🎩</p>
       <button class="hero-cta" onclick="showPage('portfolio')">
         Explore Work <span class="arrow">→</span>
@@ -937,7 +937,7 @@
   </div>
 
   <footer>
-    <span class="footer-logo">[Placeholder]</span>
+    <span class="footer-logo">Abigail Rita Rayan</span>
     <span id="footer-count-home"></span>
     <span>© <span id="year"></span></span>
   </footer>
@@ -968,7 +968,7 @@
   </section>
 
   <footer>
-    <span class="footer-logo">[Placeholder]</span>
+    <span class="footer-logo">Abigail Rita Rayan</span>
     <span id="footer-count-portfolio"></span>
     <span>© <span class="year-span"></span></span>
   </footer>
@@ -991,7 +991,19 @@
     </div>
     <div class="about-right">
       <div style="position:relative; display:inline-block;">
-        <div class="avatar-frame">🧑‍💻</div>
+        <div class="avatar-frame">
+          <img id="profile-photo" src="" alt="Your Photo"
+            style="width:100%;height:100%;object-fit:cover;display:none;">
+          <span id="avatar-emoji" style="font-size:5rem;">🧑‍💻</span>
+          <label for="photo-upload" title="Upload your photo"
+            style="position:absolute;bottom:10px;right:10px;background:var(--rust);color:#fff;
+            font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;
+            padding:5px 10px;cursor:pointer;opacity:0.85;transition:opacity 0.2s;">
+            + PHOTO
+          </label>
+          <input type="file" id="photo-upload" accept="image/*" style="display:none;"
+            onchange="uploadPhoto(event)">
+        </div>
         <div class="avatar-caption">Your Photo Here</div>
       </div>
     </div>
@@ -1086,7 +1098,7 @@
   </div>
 
   <footer>
-    <span class="footer-logo">[Placeholder]</span>
+    <span class="footer-logo">Abigail Rita Rayan</span>
     <span>Portfolio & Bio</span>
     <span>© <span class="year-span"></span></span>
   </footer>
@@ -1337,8 +1349,32 @@
     renderPortfolio(currentFilter);
   }
 
+  // ── PROFILE PHOTO UPLOAD ─────────────────────────
+  function uploadPhoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = document.getElementById('profile-photo');
+      const emoji = document.getElementById('avatar-emoji');
+      img.src = e.target.result;
+      img.style.display = 'block';
+      emoji.style.display = 'none';
+      localStorage.setItem('profilePhoto', e.target.result); // 👈 saves the photo
+    };
+    reader.readAsDataURL(file);
+  }
+
   // ── INIT ───────────────────────────────────────────
   document.getElementById('year').textContent = new Date().getFullYear();
+  const savedPhoto = localStorage.getItem('profilePhoto');
+  if (savedPhoto) {
+    const img = document.getElementById('profile-photo');
+    const emoji = document.getElementById('avatar-emoji');
+    img.src = savedPhoto;
+    img.style.display = 'block';
+    emoji.style.display = 'none';
+  }
   document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
   buildHeroGrid();
   renderHomePreview();
