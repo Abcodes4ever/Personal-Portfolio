@@ -84,7 +84,7 @@
         <div class="section-label">Latest</div>
         <h2 class="section-title">Recent Work</h2>
       </div>
-      <button class="add-project-btn" onclick="openModal()">+ Add Project</button>
+      <button class="add-project-btn admin-only" onclick="openModal()">+ Add Project</button>
     </div>
     <div class="portfolio-grid" id="home-preview-grid">
       <!-- filled by JS -->
@@ -122,7 +122,7 @@
         <div class="section-label">All Work</div>
         <h2 class="section-title">Portfolio</h2>
       </div>
-      <button class="add-project-btn" onclick="openModal()">+ Add Project</button>
+      <button class="add-project-btn admin-only" onclick="openModal()">+ Add Project</button>
     </div>
     <div class="filter-bar" id="filter-bar">
       <button class="filter-btn active" data-filter="all" onclick="applyFilter('all', this)">All</button>
@@ -168,7 +168,7 @@
           <span id="avatar-emoji" style="font-size:5rem;">🧑‍💻</span>
 
           <!-- Must be deleted later-->
-          <label for="photo-upload" title="Upload your photo"
+          <label for="photo-upload" class="admin-only" title="Upload your photo"
             style="position:absolute;bottom:10px;right:10px;background:var(--rust);color:#fff;
             font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;
             padding:5px 10px;cursor:pointer;opacity:0.85;transition:opacity 0.2s;">
@@ -332,6 +332,58 @@
   </div>
 </div>
 
+<!-- EDIT PROJECT MODAL -->
+<div class="modal-overlay" id="edit-modal-overlay" onclick="closeEditModalOnOverlay(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Edit Project</span>
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id" />
+      <div class="form-group">
+        <label class="form-label">Project Title *</label>
+        <input class="form-input" id="edit-title" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Category *</label>
+          <select class="form-select" id="edit-type">
+            <option value="article">Article / Blog</option>
+            <option value="video">Edited Video</option>
+            <option value="code">Coding Project</option>
+            <option value="essay">Essay</option>
+            <option value="diagram">Engineering Diagram</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input class="form-input" id="edit-date" type="month" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Short Description</label>
+        <textarea class="form-textarea" id="edit-desc"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tags (comma-separated)</label>
+          <input class="form-input" id="edit-tags" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Link (optional)</label>
+          <input class="form-input" id="edit-link" />
+        </div>
+      </div>
+      <div class="form-group" style="display:flex;align-items:center;gap:0.75rem;">
+        <input type="checkbox" id="edit-featured" style="width:16px;height:16px;accent-color:var(--rust);" />
+        <label class="form-label" for="edit-featured" style="margin:0;cursor:pointer;">Feature this project</label>
+      </div>
+      <button class="btn-primary" onclick="saveEdit()">Save Changes →</button>
+    </div>
+  </div>
+</div>
+
 <script>
   // ── STATE ──────────────────────────────────────────
   const TYPE_META = {
@@ -403,45 +455,60 @@
 
   // ── RENDER CARDS ───────────────────────────────────
   function cardHTML(p) {
-    const m = TYPE_META[p.type];
-    const tagsHTML = (p.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
-    const dateStr = p.date ? p.date.replace('-', ' / ') : '';
-    if (p.featured) {
-      return `
-        <div class="project-card featured" onclick="cardClick('${p.link}')">
-          <div class="featured-left">
-            <span class="featured-badge">Featured</span>
-            <div class="card-type">
-              <span class="type-dot ${m.dot}"></span>
-              <span class="${m.text}">${m.label}</span>
-            </div>
-            <h2 class="featured-title">${p.title}</h2>
-            <div class="card-tags">${tagsHTML}</div>
-          </div>
-          <div>
-            <p class="card-desc">${p.desc}</p>
-            <div class="card-meta">
-              <span>${dateStr}</span>
-              <span>${p.link && p.link !== '#' ? '↗ View Project' : 'No link yet'}</span>
-            </div>
-          </div>
-        </div>`;
-    }
+  const m = TYPE_META[p.type];
+  const tagsHTML = (p.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+  const dateStr = p.date ? p.date.replace('-', ' / ') : '';
+  const editBtn = `<button onclick="event.stopPropagation(); openEditModal(${p.id})"
+    style="font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.12em;
+    text-transform:uppercase;padding:4px 10px;border:1px solid var(--border);
+    background:none;color:#7f8fa6;cursor:pointer;transition:all 0.2s;"
+    onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
+    onmouseout="this.style.borderColor='var(--border)';this.style.color='#7f8fa6'">
+    ✎ Edit</button>`;
+  const deleteBtn = `<button onclick="event.stopPropagation(); deleteProject(${p.id})"
+    style="font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.12em;
+    text-transform:uppercase;padding:4px 10px;border:1px solid var(--border);
+    background:none;color:#7f8fa6;cursor:pointer;transition:all 0.2s;"
+    onmouseover="this.style.borderColor='var(--rust)';this.style.color='var(--rust)'"
+    onmouseout="this.style.borderColor='var(--border)';this.style.color='#7f8fa6'">
+    ✕ Delete</button>`;
+
+  if (p.featured) {
     return `
-      <div class="project-card" onclick="cardClick('${p.link}')">
-        <div class="card-type">
-          <span class="type-dot ${m.dot}"></span>
-          <span class="${m.text}">${m.label}</span>
+      <div class="project-card featured" onclick="cardClick('${p.link}')">
+        <div class="featured-left">
+          <span class="featured-badge">Featured</span>
+          <div class="card-type">
+            <span class="type-dot ${m.dot}"></span>
+            <span class="${m.text}">${m.label}</span>
+          </div>
+          <h2 class="featured-title">${p.title}</h2>
+          <div class="card-tags">${tagsHTML}</div>
         </div>
-        <h3 class="card-title">${p.title}</h3>
-        <p class="card-desc">${p.desc}</p>
-        <div class="card-tags">${tagsHTML}</div>
-        <div class="card-meta">
-          <span>${dateStr}</span>
-          <span>${p.link && p.link !== '#' ? '↗ View' : ''}</span>
+        <div>
+          <p class="card-desc">${p.desc}</p>
+          <div class="card-meta">
+            <span>${dateStr}</span>
+            <div style="display:flex;gap:8px;">${editBtn}${deleteBtn}</div>
+          </div>
         </div>
       </div>`;
   }
+  return `
+    <div class="project-card" onclick="cardClick('${p.link}')">
+      <div class="card-type">
+        <span class="type-dot ${m.dot}"></span>
+        <span class="${m.text}">${m.label}</span>
+      </div>
+      <h3 class="card-title">${p.title}</h3>
+      <p class="card-desc">${p.desc}</p>
+      <div class="card-tags">${tagsHTML}</div>
+      <div class="card-meta">
+        <span>${dateStr}</span>
+        <div style="display:flex;gap:8px;">${editBtn}${deleteBtn}</div>
+      </div>
+    </div>`;
+}
 
   function cardClick(link) {
     if (link && link !== '#') window.open(link, '_blank');
@@ -514,6 +581,55 @@
     document.getElementById('inp-type').value = 'article';
 
     closeModal();
+    renderHomePreview();
+    renderPortfolio(currentFilter);
+  }
+
+  function openEditModal(id) {
+    const p = projects.find(p => p.id === id);
+    if (!p) return;
+    document.getElementById('edit-id').value       = p.id;
+    document.getElementById('edit-title').value    = p.title;
+    document.getElementById('edit-type').value     = p.type;
+    document.getElementById('edit-date').value     = p.date || '';
+    document.getElementById('edit-desc').value     = p.desc;
+    document.getElementById('edit-tags').value     = (p.tags || []).join(', ');
+    document.getElementById('edit-link').value     = p.link !== '#' ? p.link : '';
+    document.getElementById('edit-featured').checked = p.featured;
+    document.getElementById('edit-modal-overlay').classList.add('open');
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-modal-overlay').classList.remove('open');
+  }
+
+  function closeEditModalOnOverlay(e) {
+    if (e.target === document.getElementById('edit-modal-overlay')) closeEditModal();
+  }
+
+  function saveEdit() {
+    const id = parseInt(document.getElementById('edit-id').value);
+    const p  = projects.find(p => p.id === id);
+    if (!p) return;
+    const featured = document.getElementById('edit-featured').checked;
+    if (featured) projects.forEach(p => p.featured = false);
+    p.title    = document.getElementById('edit-title').value.trim() || p.title;
+    p.type     = document.getElementById('edit-type').value;
+    p.date     = document.getElementById('edit-date').value;
+    p.desc     = document.getElementById('edit-desc').value.trim() || p.desc;
+    p.tags     = document.getElementById('edit-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+    p.link     = document.getElementById('edit-link').value.trim() || '#';
+    p.featured = featured;
+    saveProjects();
+    closeEditModal();
+    renderHomePreview();
+    renderPortfolio(currentFilter);
+  }
+
+  function deleteProject(id) {
+    if (!confirm('Delete this project? This cannot be undone.')) return;
+    projects = projects.filter(p => p.id !== id);
+    saveProjects();
     renderHomePreview();
     renderPortfolio(currentFilter);
   }
