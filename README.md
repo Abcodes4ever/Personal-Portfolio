@@ -92,21 +92,11 @@ Whether it's writing articles, developing software, creating videos, designing e
 ```text
 Personal-Portfolio/
 │
-├── public/
-│   ├── images/
-│   ├── videos/
-│   └── assets/
+├── index/
 │
-├── src/
-│   ├── components/
-│   ├── pages/
-│   ├── data/
-│   ├── styles/
-│   └── utils/
+├── style/
 │
 ├── README.md
-├── package.json
-└── next.config.js
 ```
 
 ---
