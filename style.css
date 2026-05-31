@@ -1,5 +1,5 @@
 /* To show the buttons again while editing, remove display: none !important; from .admin-only */
-.admin-only {}
+.admin-only {display: none !important;}
 
 :root {
     /* Alice in Wonderland palette */

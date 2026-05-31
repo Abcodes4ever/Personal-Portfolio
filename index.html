@@ -168,7 +168,7 @@
             style="width:100%;height:100%;object-fit:cover;display:none;">
           <span id="avatar-emoji" style="font-size:5rem;">🧑‍💻</span>
 
-          <!-- Must be deleted later-->
+          <!-- Can be made invisible -->
           <label for="photo-upload" class="admin-only" title="Upload your photo"
             style="position:absolute;bottom:10px;right:10px;background:var(--rust);color:#fff;
             font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;
@@ -338,7 +338,7 @@
   <div class="modal">
     <div class="modal-header">
       <span class="modal-title">Edit Project</span>
-      <button class="modal-close" onclick="closeEditModal()">✕</button>
+      <button class="modal-close admin-only" onclick="closeEditModal()">✕</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="edit-id" />
@@ -565,7 +565,7 @@
           <p class="card-desc">${p.desc}</p>
           <div class="card-meta">
             <span>${dateStr}</span>
-            <div style="display:flex;gap:8px;">${editBtn}${deleteBtn}</div>
+            <div style="display:flex;gap:8px;" class = "admin-only">${editBtn}${deleteBtn}</div>
           </div>
         </div>
       </div>`;
@@ -581,7 +581,7 @@
       <div class="card-tags">${tagsHTML}</div>
       <div class="card-meta">
         <span>${dateStr}</span>
-        <div style="display:flex;gap:8px;">${editBtn}${deleteBtn}</div>
+        <div style="display:flex;gap:8px;" class = "admin-only">${editBtn}${deleteBtn}</div>
       </div>
     </div>`;
 }
