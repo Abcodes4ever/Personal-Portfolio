@@ -76,18 +76,13 @@ Whether it's writing articles, developing software, creating videos, designing e
 
 ### Frontend
 
-* React.js / Next.js
 * HTML5
 * CSS3
-* JavaScript (ES6+)
-* Tailwind CSS
 
 ### Tools & Libraries
 
-* React Hooks
 * Responsive Design
 * Modern UI Components
-* Animation Libraries
 * Image Optimization
 
 ---
