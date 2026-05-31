@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Cinzel:wght@400;600;700&family=IM+Fell+English:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -384,7 +385,84 @@
   </div>
 </div>
 
+<script src="supabase.js"></script>
 <script>
+  // ── SUPABASE SETUP ──────────────────────────────────
+  let projects = [];
+  
+  async function loadProjects() {
+    try {
+      projects = await db.getProjects();
+      nextId = projects.length ? Math.max(...projects.map(p => p.id)) + 1 : 1;
+    } catch(e) {
+      console.error('Could not load projects:', e);
+    }
+  }
+
+  async function saveProjects() {
+    // no-op: individual operations now call db directly
+  }
+
+  async function addProject() {
+    const title = document.getElementById('inp-title').value.trim();
+    if (!title) { alert('Please enter a project title.'); return; }
+    const type     = document.getElementById('inp-type').value;
+    const date     = document.getElementById('inp-date').value;
+    const desc     = document.getElementById('inp-desc').value.trim() || 'No description provided.';
+    const tagsRaw  = document.getElementById('inp-tags').value;
+    const link     = document.getElementById('inp-link').value.trim() || '#';
+    const featured = document.getElementById('inp-featured').checked;
+    const tags     = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+
+    if (featured) {
+      projects.forEach(p => p.featured = false);
+      await Promise.all(projects.map(p => db.updateProject(p)));
+    }
+
+    const newProject = { title, type, desc, tags, date, link, featured };
+    const newId = await db.addProject(newProject);
+    newProject.id = newId;
+    projects.unshift(newProject);
+
+    ['inp-title','inp-date','inp-desc','inp-tags','inp-link'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('inp-featured').checked = false;
+    document.getElementById('inp-type').value = 'article';
+
+    closeModal();
+    renderHomePreview();
+    renderPortfolio(currentFilter);
+  }
+  
+  async function saveEdit() {
+    const id = parseInt(document.getElementById('edit-id').value);
+    const p  = projects.find(p => p.id === id);
+    if (!p) return;
+    const featured = document.getElementById('edit-featured').checked;
+    if (featured) {
+      projects.forEach(p => p.featured = false);
+      await Promise.all(projects.map(p => db.updateProject(p)));
+    }
+    p.title    = document.getElementById('edit-title').value.trim() || p.title;
+    p.type     = document.getElementById('edit-type').value;
+    p.date     = document.getElementById('edit-date').value;
+    p.desc     = document.getElementById('edit-desc').value.trim() || p.desc;
+    p.tags     = document.getElementById('edit-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+    p.link     = document.getElementById('edit-link').value.trim() || '#';
+    p.featured = featured;
+    await db.updateProject(p);
+    closeEditModal();
+    renderHomePreview();
+    renderPortfolio(currentFilter);
+  }
+
+  async function deleteProject(id) {
+    if (!confirm('Delete this project? This cannot be undone.')) return;
+    await db.deleteProject(id);
+    projects = projects.filter(p => p.id !== id);
+    renderHomePreview();
+    renderPortfolio(currentFilter);
+  }
+
   // ── STATE ──────────────────────────────────────────
   const TYPE_META = {
     article:  { label: 'Article / Blog',       dot: 'dot-article',  text: 'type-text-article',  emoji: '📰' },
@@ -393,8 +471,6 @@
     essay:    { label: 'Essay',                dot: 'dot-essay',    text: 'type-text-essay',    emoji: '✍️' },
     diagram:  { label: 'Engineering Diagram',  dot: 'dot-diagram',  text: 'type-text-diagram',  emoji: '📐' },
   };
-
-  let projects = [];
 
   let currentFilter = 'all';
   let nextId = 6;
@@ -559,32 +635,6 @@
     if (e.target === document.getElementById('modal-overlay')) closeModal();
   }
 
-  function addProject() {
-    const title = document.getElementById('inp-title').value.trim();
-    if (!title) { alert('Please enter a project title.'); return; }
-    const type     = document.getElementById('inp-type').value;
-    const date     = document.getElementById('inp-date').value;
-    const desc     = document.getElementById('inp-desc').value.trim() || 'No description provided.';
-    const tagsRaw  = document.getElementById('inp-tags').value;
-    const link     = document.getElementById('inp-link').value.trim() || '#';
-    const featured = document.getElementById('inp-featured').checked;
-    const tags     = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
-
-    if (featured) projects.forEach(p => p.featured = false);
-
-    projects.unshift({ id: nextId++, title, type, desc, tags, date, link, featured });
-
-    saveProjects(); // 👈 new line
-
-    ['inp-title','inp-date','inp-desc','inp-tags','inp-link'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('inp-featured').checked = false;
-    document.getElementById('inp-type').value = 'article';
-
-    closeModal();
-    renderHomePreview();
-    renderPortfolio(currentFilter);
-  }
-
   function openEditModal(id) {
     const p = projects.find(p => p.id === id);
     if (!p) return;
@@ -634,50 +684,43 @@
     renderPortfolio(currentFilter);
   }
 
-  // ── SAVING PROJECT UPLOADS ─────────────────────────
-  function saveProjects() {
-    localStorage.setItem('joat_projects', JSON.stringify(projects));
-  }
-
-  function loadProjects() {
-    const saved = localStorage.getItem('joat_projects');
-    if (saved) {
-      projects = JSON.parse(saved);
-      nextId = projects.length ? Math.max(...projects.map(p => p.id)) + 1 : 1;
-    }
-  }
-
   // ── PROFILE PHOTO UPLOAD ─────────────────────────
   function uploadPhoto(event) {
     const file = event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = function(e) {
-      const img = document.getElementById('profile-photo');
+    reader.onload = async function(e) {
+      const img   = document.getElementById('profile-photo');
       const emoji = document.getElementById('avatar-emoji');
       img.src = e.target.result;
-      img.style.display = 'block';
+      img.style.display   = 'block';
       emoji.style.display = 'none';
-      localStorage.setItem('profilePhoto', e.target.result); // 👈 saves the photo
+      await db.savePhoto(e.target.result); // saves to Supabase for everyone
     };
     reader.readAsDataURL(file);
   }
 
   // ── INIT ───────────────────────────────────────────
-  loadProjects();
-  document.getElementById('year').textContent = new Date().getFullYear();
-  const savedPhoto = localStorage.getItem('profilePhoto');
-  if (savedPhoto) {
-    const img = document.getElementById('profile-photo');
-    const emoji = document.getElementById('avatar-emoji');
-    img.src = savedPhoto;
-    img.style.display = 'block';
-    emoji.style.display = 'none';
-  }
-  document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
-  buildHeroGrid();
-  renderHomePreview();
-  updateFooterCounts();
+  (async () => {
+    document.getElementById('year').textContent = new Date().getFullYear();
+    document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
+
+    await loadProjects();
+
+    // Load saved photo for everyone
+    const savedPhoto = await db.getPhoto();
+    if (savedPhoto) {
+      const img   = document.getElementById('profile-photo');
+      const emoji = document.getElementById('avatar-emoji');
+      img.src = savedPhoto;
+      img.style.display   = 'block';
+      emoji.style.display = 'none';
+    }
+
+    buildHeroGrid();
+    renderHomePreview();
+    updateFooterCounts();
+  })();
 </script>
 </body>
 </html>
